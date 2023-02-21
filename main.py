@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -19,6 +19,18 @@ class User(db.Model):
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    def to_dict(self):
+        return {
+            'name': self.first_name + " " + self.last_name,
+            'company': self.company.name,
+            'email': self.email,
+            'phone': self.phone,
+            'skills': [{
+                **userskill.skill.to_dict(), 
+                'rating': userskill.rating
+            } for userskill in self.skills]
+        }
+
     def __repr__(self):
         return '<User %r>' % self.id
 
@@ -28,6 +40,9 @@ class Skill(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {'skill': self.name}
 
     def __repr__(self):
         return '<Skill %r>' % self.id
@@ -61,3 +76,8 @@ class Company(db.Model):
 @app.route("/")
 def hello_world():
     return "<p>Connected!</p>"
+
+@app.route("/users", methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return jsonify([user.to_dict() for user in users])
