@@ -81,3 +81,13 @@ def hello_world():
 def get_users():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
+
+@app.route("/users/<int:user_id>", methods=['GET'])
+def get_user(user_id):
+    user = User.query.get_or_404(user_id)
+    return jsonify(user.to_dict())
+
+@app.route("/users/<string:email>")
+def get_user_by_email(email):
+    user = User.query.filter_by(email=email).first_or_404()
+    return jsonify(user.to_dict())
