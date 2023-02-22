@@ -87,23 +87,6 @@ class Company(db.Model):
     def __repr__(self):
         return '<Company %r>' % self.id
 
-# # For performance, we use triggers to maintain skill frequency. 
-# skill_frequency_trigger = """
-# DROP TRIGGER IF EXISTS user_skill_trigger;
-# CREATE TRIGGER user_skill_trigger
-# AFTER INSERT OR DELETE ON user_skill
-# FOR EACH ROW
-# BEGIN
-#     IF (TG_OP = 'INSERT') THEN
-#         UPDATE skill SET frequency = frequency + 1 WHERE id = NEW.skill_id;
-#     ELSEIF (TG_OP = 'DELETE') THEN
-#         UPDATE skill SET frequency = frequency - 1 WHERE id = OLD.skill_id;
-#     END IF;
-# END;
-# """
-# db.session.execute(text(skill_frequency_trigger))
-# db.session.commit()
-
 @app.route("/")
 def hello_world():
     return "<p>Connected!</p>"
