@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy, event
+from sqlalchemy import event
 from datetime import datetime
 
 app = Flask(__name__)
@@ -37,11 +38,14 @@ class User(db.Model):
 class Skill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
+    frequency = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    def to_dict(self):
+    def to_dict(self, include_frequency = False):
+        if include_frequency:
+            return {'skill': self.name, 'frequency': len(self.users)}
         return {'skill': self.name}
 
     def __repr__(self):
@@ -60,6 +64,16 @@ class UserSkill(db.Model):
 
     user = db.relationship('User', backref=db.backref('skills', lazy=False))
     skill = db.relationship('Skill', backref=db.backref('users', lazy=False))
+@event.listens_for(UserSkill, 'after_insert')
+def increment_skill_frequency(mapper, connection, target):
+    connection.execute(
+        "UPDATE Skill SET frequency = frequency + 1 WHERE id = ?", 
+        (target.skill_id,))
+@event.listens_for(UserSkill, 'after_delete')
+def decrement_skill_frequency(mapper, connection, target):
+    connection.execute(
+        "UPDATE Skill SET frequency = frequency - 1 WHERE id = ?", 
+        (target.skill_id,))
 
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -71,13 +85,30 @@ class Company(db.Model):
         backref=db.backref('company', lazy=False))
 
     def __repr__(self):
-        return '<Company %r>' % self.id 
+        return '<Company %r>' % self.id
+
+# # For performance, we use triggers to maintain skill frequency. 
+# skill_frequency_trigger = """
+# DROP TRIGGER IF EXISTS user_skill_trigger;
+# CREATE TRIGGER user_skill_trigger
+# AFTER INSERT OR DELETE ON user_skill
+# FOR EACH ROW
+# BEGIN
+#     IF (TG_OP = 'INSERT') THEN
+#         UPDATE skill SET frequency = frequency + 1 WHERE id = NEW.skill_id;
+#     ELSEIF (TG_OP = 'DELETE') THEN
+#         UPDATE skill SET frequency = frequency - 1 WHERE id = OLD.skill_id;
+#     END IF;
+# END;
+# """
+# db.session.execute(text(skill_frequency_trigger))
+# db.session.commit()
 
 @app.route("/")
 def hello_world():
     return "<p>Connected!</p>"
 
-@app.route("/users", methods=['GET'])
+@app.route("/users/", methods=['GET'])
 def get_users():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
@@ -134,3 +165,24 @@ def update_user(user_id):
 def update_user_by_email(email):
     user = User.query.filter_by(email=email).first_or_404()
     return update_user(user.id)
+
+@app.route("/skills/", methods=['GET'])
+def get_skills():
+    min_frequency = request.args.get('min_frequency')
+    max_frequency = request.args.get('max_frequency')
+
+    if min_frequency and not min_frequency.isdigit():
+        return jsonify({'error': 'min_frequency must be an integer'}), 400
+    if max_frequency and not max_frequency.isdigit():
+        return jsonify({'error': 'max_frequency must be an integer'}), 400
+
+
+    query = Skill.query
+    if min_frequency:
+        query = query.filter(Skill.frequency >= min_frequency)
+    if max_frequency:
+        query = query.filter(Skill.frequency <= max_frequency)
+
+    skills = query.all()
+    return jsonify({'skills': [skill.to_dict(include_frequency=True) 
+        for skill in skills]})
