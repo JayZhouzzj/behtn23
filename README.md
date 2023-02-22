@@ -1,6 +1,7 @@
 ## Overview
 This small backend uses flask and SQLite to manage user data. 
-It uses flask_sqlalchemy to simplify working with data.
+It uses flask_sqlalchemy to simplify working with data.  
+```main.py``` defines the Models and endpoints. ```dbinit.py``` loads mock data into db. ```htn.db``` stores db data.
 
 ## How to run
 ```docker compose up```
