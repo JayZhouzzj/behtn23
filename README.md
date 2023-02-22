@@ -21,7 +21,7 @@ This endpoint returns a list of all users and their information.
 ```GET localhost:3000/users/example@email.com```  
 This endpoint returns the user data for a specific user.  
 ### Updating User Data Endpoint
-```PUT localhost:3000/users/123```
+```PUT localhost:3000/users/123```  
 ```PUT localhost:3000/users/example@email.com```
 ```
 {
