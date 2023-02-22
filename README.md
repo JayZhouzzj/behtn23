@@ -1,6 +1,7 @@
 ## Overview
 This small backend uses flask and SQLite to manage user data. 
-It uses flask_sqlalchemy to simplify working with data.
+It uses flask_sqlalchemy to simplify working with data.  
+```main.py``` defines the Models and endpoints. ```dbinit.py``` loads mock data into db. ```htn.db``` stores db data.
 
 ## How to run
 ```docker compose up```
@@ -36,7 +37,7 @@ This endpoint returns a list of skills within the frequency range (frequency = h
 (All API responses omits ids to be concise)
 
 ## Database Design
-![htn-userdb](https://user-images.githubusercontent.com/72354860/220510570-64423589-1378-4f18-9702-cea7b73edaae.png)
+![htn-userdb](https://user-images.githubusercontent.com/72354860/220512680-5d93c015-3db8-4baf-baff-49a74ecb16f3.png)
 The database relationship is relatively simple, as shown in the graph. Some notes:
 * The design normalizes data into multiple tables. This relational design can reduce data redundancy, improve data integrity and enable better data analysis.
 * User and Skill have a many-to-many relationship. UserSkill is a helper table for this.
