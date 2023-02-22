@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy, event
-from sqlalchemy import event
 from datetime import datetime
 
 app = Flask(__name__)
@@ -14,7 +13,7 @@ class User(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50))
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(255), unique=True, index=True, nullable=False)
     phone = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
